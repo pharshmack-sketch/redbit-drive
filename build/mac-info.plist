@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  п.9и ТЗ — macOS интеграция с Finder
+  
+  NSServices: добавляет пункт «Отправить в RedBit Drive» в меню Сервисы Finder.
+  CFBundleURLTypes: регистрирует URL-схему redbitdrive://
+  CFBundleDocumentTypes: позволяет открывать файлы через «Открыть с помощью...»
+-->
+<plist version="1.0">
+<dict>
+  <!-- ── URL-схема: redbitdrive:// ──────────────────────────────────────── -->
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>io.redbit.drive</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>redbitdrive</string>
+      </array>
+    </dict>
+  </array>
+
+  <!-- ── Открытие файлов ─────────────────────────────────────────────────── -->
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <!-- Зашифрованные файлы RedBit Drive -->
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>RedBit Drive Encrypted File</string>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>rbe</string>
+      </array>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Owner</string>
+    </dict>
+  </array>
+
+  <!-- ── NSServices: пункт в меню Сервисы Finder ────────────────────────── -->
+  <key>NSServices</key>
+  <array>
+    <dict>
+      <!-- Загрузить файл в RedBit Drive -->
+      <key>NSMenuItem</key>
+      <dict>
+        <key>default</key>
+        <string>Отправить в RedBit Drive</string>
+      </dict>
+      <key>NSMessage</key>
+      <string>uploadFiles</string>
+      <key>NSSendTypes</key>
+      <array>
+        <string>NSFilenamesPboardType</string>
+        <string>public.file-url</string>
+      </array>
+      <key>NSRequiredContext</key>
+      <dict>
+        <key>NSApplicationIdentifier</key>
+        <string>io.redbit.drive</string>
+      </dict>
+    </dict>
+  </array>
+
+  <!-- ── Поддержка Retina ──────────────────────────────────────────────────── -->
+  <key>NSHighResolutionCapable</key>
+  <true/>
+
+  <!-- ── Разрешение сетевых запросов ───────────────────────────────────────── -->
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+  </dict>
+
+  <!-- ── Не восстанавливать окна (как у Finder) ─────────────────────────── -->
+  <key>NSQuitAlwaysKeepsWindows</key>
+  <false/>
+</dict>
+</plist>
