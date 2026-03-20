@@ -11,43 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { Eye, EyeOff, Sun, Moon, Monitor, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Маскот — импортируем SVG как строку или используем inline
-const MascotSVG = () => (
-  <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-    {/* Тело */}
-    <rect x="25" y="35" width="70" height="65" rx="12" fill="hsl(0 72% 51%)" />
-    {/* Голова/экран */}
-    <rect x="30" y="20" width="60" height="50" rx="10" fill="hsl(217 91% 60%)" />
-    {/* Экран */}
-    <rect x="38" y="28" width="44" height="34" rx="6" fill="hsl(222 20% 7%)" />
-    {/* Глаза */}
-    <circle cx="50" cy="43" r="5" fill="white" />
-    <circle cx="70" cy="43" r="5" fill="white" />
-    <circle cx="51.5" cy="44.5" r="2.5" fill="hsl(222 20% 7%)" />
-    <circle cx="71.5" cy="44.5" r="2.5" fill="hsl(222 20% 7%)" />
-    {/* Блик */}
-    <circle cx="52.5" cy="43.5" r="1" fill="white" />
-    <circle cx="72.5" cy="43.5" r="1" fill="white" />
-    {/* Рот */}
-    <path d="M50 55 Q60 61 70 55" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
-    {/* Уши-антенны */}
-    <rect x="42" y="14" width="6" height="12" rx="3" fill="hsl(217 91% 60%)" />
-    <rect x="72" y="14" width="6" height="12" rx="3" fill="hsl(217 91% 60%)" />
-    <circle cx="45" cy="12" r="4" fill="hsl(38 92% 50%)" />
-    <circle cx="75" cy="12" r="4" fill="hsl(38 92% 50%)" />
-    {/* Ноги */}
-    <rect x="38" y="94" width="16" height="18" rx="6" fill="hsl(0 62% 45%)" />
-    <rect x="66" y="94" width="16" height="18" rx="6" fill="hsl(0 62% 45%)" />
-    {/* Руки */}
-    <rect x="10" y="50" width="16" height="30" rx="8" fill="hsl(0 62% 45%)" />
-    <rect x="94" y="50" width="16" height="30" rx="8" fill="hsl(0 62% 45%)" />
-    {/* Значок диска на теле */}
-    <rect x="45" y="65" width="30" height="22" rx="4" fill="hsl(0 62% 45%)" />
-    <circle cx="60" cy="76" r="6" fill="hsl(38 92% 50%)" stroke="white" strokeWidth="1.5" />
-    <circle cx="60" cy="76" r="2" fill="white" />
-  </svg>
-);
+import mascotUrl from "@assets/icons/mascot_original.png";
 
 export default function AuthPage() {
   const { signIn } = useAuth();
@@ -108,9 +72,14 @@ export default function AuthPage() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center text-center space-y-6 max-w-sm">
-          {/* Маскот */}
+          {/* Маскот — реальный PNG Redbit */}
           <div className="w-48 h-48 drop-shadow-xl animate-fade-in">
-            <MascotSVG />
+            <img
+              src={mascotUrl}
+              alt="Redbit"
+              className="w-full h-full object-contain"
+              draggable={false}
+            />
           </div>
 
           {/* Лого и название */}
@@ -179,9 +148,7 @@ export default function AuthPage() {
 
         {/* Мобильный логотип */}
         <div className="lg:hidden flex items-center gap-2 mb-8">
-          <div className="w-10 h-10">
-            <MascotSVG />
-          </div>
+          <img src={mascotUrl} alt="Redbit" className="w-10 h-10 object-contain" draggable={false} />
           <div>
             <span
               className="text-2xl font-bold"
