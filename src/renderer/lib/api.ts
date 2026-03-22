@@ -1,11 +1,14 @@
 /**
  * RedBit Drive — API Client
- * 
+ *
  * Обёртка над Supabase + S3.
- * Поддерживает: реальный Supabase backend и мок-сервер для тестирования.
+ * S3-операции проксируются через веб-приложение (app.pxbt.io) посредством
+ * storageProxy — десктоп не знает о конфигурации S3.
+ * При смене S3-сервера достаточно обновить env в Supabase Dashboard.
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { uploadFileViaProxy, shouldUseS3, storageProxy } from "@/lib/storage-proxy";
 
 // ── Конфигурация ─────────────────────────────────────────────────────────
 export interface ApiConfig {
@@ -153,10 +156,10 @@ export const filesAPI = {
       return mockAPI.files.delete(item.id);
     }
 
-    // Удаляем из S3 если нужно
+    // Удаляем из S3 через прокси (Edge Function на стороне бэкенда)
     if (!item.is_folder && item.storage_backend === "s3" && item.s3_key) {
       try {
-        await supabase.functions.invoke("s3-delete", { body: { keys: [item.s3_key] } });
+        await storageProxy.deleteFiles([item.s3_key]);
       } catch { /* best-effort */ }
     } else if (!item.is_folder && item.file_url) {
       const parts = item.file_url.split("/user-files/");
@@ -222,44 +225,42 @@ export const filesAPI = {
 };
 
 // ── Загрузка файлов ────────────────────────────────────────────────────────
+/**
+ * Загрузка файла.
+ *
+ * Все S3-операции делегируются в storageProxy → Supabase Edge Function.
+ * Десктоп не знает о конфигурации S3 (endpoint, keys, bucket).
+ * При смене провайдера меняются только env-переменные в Supabase Dashboard.
+ */
 export async function uploadFile(
   file: File,
   userId: string,
   folderId: string | null,
   onProgress?: (pct: number) => void
 ): Promise<UserFile> {
+  // Mock-режим
   if (DEFAULT_CONFIG.useMock) {
     return mockAPI.files.upload(file, folderId, onProgress);
   }
-
-  const isLargeOrMedia = shouldUseS3(file);
 
   let fileUrl: string;
   let storageBackend: "supabase" | "s3" = "supabase";
   let s3Key: string | undefined;
 
-  if (isLargeOrMedia) {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("Not authenticated");
-
+  if (shouldUseS3(file)) {
+    // ── S3 через прокси-слой (storageProxy → Edge Function) ──────────────
+    // Десктоп не обращается к S3 напрямую — только через веб-приложение.
     const fileId = crypto.randomUUID();
     const ext = file.name.includes(".") ? file.name.split(".").pop() : "bin";
     const path = `personal/${fileId}.${ext}`;
 
-    // Получаем presigned URL
-    const { data, error } = await supabase.functions.invoke("s3-presign", {
-      body: { path, contentType: file.type || "application/octet-stream" },
-    });
-    if (error) throw error;
+    const result = await uploadFileViaProxy(file, path, onProgress);
 
-    // Загружаем через XHR с прогрессом
-    await xhrPut(data.presignedUrl, file, onProgress);
-
-    fileUrl = data.publicUrl;
+    fileUrl = result.url;
     storageBackend = "s3";
-    s3Key = data.key;
-    onProgress?.(100);
+    s3Key = result.key;
   } else {
+    // ── Небольшие файлы — Supabase Storage (не требует S3) ────────────────
     const path = `${userId}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from("user-files")
@@ -276,47 +277,25 @@ export async function uploadFile(
     onProgress?.(100);
   }
 
+  // Сохраняем метаданные в БД
   const { data, error: insertError } = await supabase
     .from("user_files")
     .insert({
-      user_id: userId,
-      file_name: file.name,
-      file_url: fileUrl,
-      file_size: file.size,
-      file_type: file.type || null,
-      folder_id: folderId,
-      source: "upload",
-      storage_backend: storageBackend,
-      s3_key: s3Key || null,
+      user_id:          userId,
+      file_name:        file.name,
+      file_url:         fileUrl,
+      file_size:        file.size,
+      file_type:        file.type || null,
+      folder_id:        folderId,
+      source:           "upload",
+      storage_backend:  storageBackend,
+      s3_key:           s3Key || null,
     })
     .select()
     .single();
 
   if (insertError) throw insertError;
   return data as UserFile;
-}
-
-function shouldUseS3(file: File): boolean {
-  const mediaTypes = ["video/", "audio/", "image/"];
-  if (mediaTypes.some((t) => file.type.startsWith(t))) return true;
-  if (file.size > 10 * 1024 * 1024) return true;
-  return false;
-}
-
-function xhrPut(url: string, file: File, onProgress?: (pct: number) => void): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("PUT", url, true);
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
-    };
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(`Upload failed: ${xhr.status}`));
-    };
-    xhr.onerror = () => reject(new Error("Network error"));
-    xhr.send(file);
-  });
 }
 
 // ── Auth API ──────────────────────────────────────────────────────────────
