@@ -16,14 +16,15 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/lib/api";
 import { appInfo, syncAPI, config, isElectron, getPlatform } from "@/lib/electron";
 import { setSessionPassword, getSessionPassword, clearSessionPassword, hasSessionPassword } from "@/lib/encryption";
+import { DEFAULT_STORAGE_API_URL } from "@/lib/storage-proxy";
 import { getInitials } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
   Sun, Moon, Monitor, User, Shield, Info, Loader2,
-  FolderOpen, RefreshCw, Lock, Unlock, Eye, EyeOff,
-  Keyboard, Cloud, CloudOff, Pause, Play, HardDrive,
+  FolderOpen, Lock, Unlock, Eye, EyeOff,
+  Keyboard, Pause, Play, HardDrive, Server,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,12 @@ export default function SettingsPage() {
 
   // Приложение
   const [appInfoData, setAppInfoData] = useState<any>(null);
+
+  // Storage API URL
+  const [storageApiUrl, setStorageApiUrl] = useState(
+    (import.meta.env.VITE_STORAGE_API_URL as string | undefined) || DEFAULT_STORAGE_API_URL
+  );
+  const [savingStorageUrl, setSavingStorageUrl] = useState(false);
 
   // п.4 Синхронизация
   const [syncRoot, setSyncRoot] = useState("");
@@ -196,6 +203,54 @@ export default function SettingsPage() {
                 <span className="text-xs font-medium">{opt.label}</span>
               </button>
             ))}
+          </div>
+        </Section>
+
+        {/* Storage API — адрес веб-приложения для S3-прокси */}
+        <Section icon={<Server className="w-4 h-4" />} title="Хранилище (S3 через веб-приложение)">
+          <p className="text-xs text-muted-foreground mb-3">
+            Десктоп запрашивает presigned URL у веб-приложения — S3 не настраивается в клиенте.
+            При смене S3-провайдера достаточно обновить переменные окружения в Supabase Dashboard.
+          </p>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Storage API URL</label>
+            <div className="flex gap-2">
+              <Input
+                value={storageApiUrl}
+                onChange={(e) => setStorageApiUrl(e.target.value)}
+                placeholder="https://app.pxbt.io"
+                className="flex-1 font-mono text-sm"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={savingStorageUrl}
+                onClick={async () => {
+                  setSavingStorageUrl(true);
+                  try {
+                    if (isElectron()) {
+                      await config.set("storageApiUrl", storageApiUrl.trim());
+                    }
+                    toast({ title: "Storage API URL сохранён", description: "Применится при следующем запросе", type: "success" });
+                  } finally { setSavingStorageUrl(false); }
+                }}
+              >
+                {savingStorageUrl ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Сохранить"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              По умолчанию: <code className="font-mono bg-muted px-1 rounded">{DEFAULT_STORAGE_API_URL}</code>
+            </p>
+          </div>
+
+          <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border text-xs space-y-1">
+            <p className="font-medium text-foreground">Как работает S3-интеграция:</p>
+            <p className="text-muted-foreground">1. Клиент → <code className="font-mono">Storage API URL</code>/functions/v1/s3-presign</p>
+            <p className="text-muted-foreground">2. Supabase Edge Function → читает S3_ENDPOINT из env → выдаёт presigned URL</p>
+            <p className="text-muted-foreground">3. Клиент → загружает файл напрямую на S3 по presigned URL</p>
+            <p className="text-muted-foreground text-[10px] mt-1 text-success">
+              ✓ Клиент не знает о конфигурации S3. Смена провайдера — только в Supabase Dashboard.
+            </p>
           </div>
         </Section>
 
