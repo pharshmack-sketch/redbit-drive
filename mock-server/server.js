@@ -225,21 +225,101 @@ const routes = {
     });
   },
 
-  // ── S3 presign (эмуляция) ────────────────────────────────────────────
+  // ── S3 Storage Proxy (эмуляция) ─────────────────────────────────────
+  //
+  // Эмулирует единую точку входа /api/storage/presign — именно через неё
+  // десктопный клиент запрашивает presigned URL.
+  // В production эти запросы идут к app.pxbt.io, который проксирует их
+  // к Supabase Edge Function s3-presign.
+  //
+  // Поддерживаемые action:
+  //   presign          — simple PUT upload
+  //   createMultipart  — начать multipart upload
+  //   signPart         — подписать часть
+  //   completeMultipart— завершить multipart
+  //   abortMultipart   — отменить multipart
+  //   getObject        — presigned GET (для скачивания)
+  //   delete           — удалить файлы
+  //
+  // Все эти роуты имитируют логику реального Edge Function s3-presign.
+
   "POST /functions/v1/s3-presign": async (req, res) => {
     const body = await getBody(req);
-    const key = body.path || `uploads/${slugify()}`;
-    send(res, 200, {
-      presignedUrl: `http://localhost:${PORT}/mock-s3/${key}`,
-      publicUrl: `http://localhost:${PORT}/mock-s3/${key}`,
-      key,
-    });
+    const action = body.action || "presign";
+
+    // Simple presign (PUT)
+    if (action === "presign") {
+      const key = (body.path || `personal/${slugify()}`).replace(/^\/+/, "");
+      send(res, 200, {
+        presignedUrl: `http://localhost:${PORT}/mock-s3/${key}`,
+        publicUrl:    `http://localhost:${PORT}/mock-s3/${key}`,
+        key,
+      });
+      return;
+    }
+
+    // Create multipart upload
+    if (action === "createMultipart") {
+      const key = (body.path || `personal/${slugify()}`).replace(/^\/+/, "");
+      send(res, 200, {
+        uploadId:  `mock-upload-${slugify()}`,
+        key,
+        publicUrl: `http://localhost:${PORT}/mock-s3/${key}`,
+      });
+      return;
+    }
+
+    // Sign part
+    if (action === "signPart") {
+      const { key, uploadId, partNumber } = body;
+      send(res, 200, {
+        presignedUrl: `http://localhost:${PORT}/mock-s3/${key}?partNumber=${partNumber}&uploadId=${uploadId}`,
+      });
+      return;
+    }
+
+    // Complete multipart
+    if (action === "completeMultipart") {
+      const { key } = body;
+      send(res, 200, {
+        success: true,
+        url: `http://localhost:${PORT}/mock-s3/${key}`,
+        key,
+      });
+      return;
+    }
+
+    // Abort multipart
+    if (action === "abortMultipart") {
+      send(res, 200, { success: true });
+      return;
+    }
+
+    // Presigned GET (download)
+    if (action === "getObject") {
+      const { key, expiresIn = 3600 } = body;
+      send(res, 200, {
+        presignedUrl: `http://localhost:${PORT}/mock-s3/${key}?expires=${Date.now() + expiresIn * 1000}`,
+      });
+      return;
+    }
+
+    // Delete files
+    if (action === "delete") {
+      const keys = Array.isArray(body.keys) ? body.keys : [];
+      console.log("[Mock S3] Deleted keys:", keys);
+      send(res, 200, { success: true, deleted: keys.length });
+      return;
+    }
+
+    send(res, 400, { error: `Unknown action: ${action}` });
   },
 
+  // Mock S3 upload endpoint — принимает PUT запросы с файлами
   "PUT /mock-s3/:key": (req, res) => {
-    // Симулируем принятие загрузки
-    res.writeHead(200, { "ETag": `"mock-etag-${Date.now()}"` });
-    req.resume(); // дрейним тело
+    const etag = `"mock-etag-${Date.now()}"`;
+    res.writeHead(200, { "ETag": etag, "Content-Length": "0" });
+    req.resume();
     req.on("end", () => res.end());
   },
 
