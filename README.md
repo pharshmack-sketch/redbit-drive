@@ -3,6 +3,19 @@
 Кроссплатформенное десктопное приложение для macOS и Windows, клиент для S3-совместимого облачного хранилища.
 Стилистически повторяет веб-версию [Redbit](https://pxbt.io).
 
+---
+
+## Скачать
+
+| Платформа | Файл | Размер |
+|-----------|-------|--------|
+| **macOS** (Apple Silicon) | [RedBit.Drive-1.0.2-arm64.dmg](https://github.com/pharshmack-sketch/redbit-drive/releases/download/v1.0.2/RedBit.Drive-1.0.2-arm64.dmg) | 102 MB |
+| **macOS** (Intel) | [RedBit.Drive-1.0.2-x64.dmg](https://github.com/pharshmack-sketch/redbit-drive/releases/download/v1.0.2/RedBit.Drive-1.0.2-x64.dmg) | 107 MB |
+| **Windows** (Установщик) | [RedBit.Drive.Setup.1.0.2.exe](https://github.com/pharshmack-sketch/redbit-drive/releases/download/v1.0.2/RedBit.Drive.Setup.1.0.2.exe) | 80 MB |
+| **Windows** (Portable) | [RedBit.Drive.1.0.2-portable.exe](https://github.com/pharshmack-sketch/redbit-drive/releases/download/v1.0.2/RedBit.Drive.1.0.2-portable.exe) | 80 MB |
+
+> Все файлы доступны на странице [Releases](https://github.com/pharshmack-sketch/redbit-drive/releases/tag/v1.0.2).
+
 ## Стек технологий
 
 | Слой | Технологии |
