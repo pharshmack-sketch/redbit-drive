@@ -23,6 +23,8 @@ import {
 } from "@/components/files/ContextMenu";
 import { useShortcut, type ShortcutEvent } from "@/components/DashboardLayout";
 import { getSessionPassword, hasSessionPassword, encryptFileObject } from "@/lib/encryption";
+import { storageProxy } from "@/lib/storage-proxy";
+import SecureImage from "@/components/files/SecureImage";
 // Bug 4: импортируем ShareDialog с корректной логикой URL
 import ShareDialog from "@/components/files/ShareDialog";
 import {
@@ -278,23 +280,45 @@ export default function FilesPage() {
     if (files.length) await handleUploadFiles(files);
   }, [handleUploadFiles]);
 
+  // ── Получение URL (presigned для S3) ──────────────────────────────────
+  const resolveDownloadUrl = useCallback(async (item: UserFile): Promise<string | null> => {
+    if (!item.file_url) return null;
+    if (item.storage_backend === "s3" && item.s3_key) {
+      try {
+        const { presignedUrl } = await storageProxy.presignGet(item.s3_key, item.file_name);
+        return presignedUrl;
+      } catch {
+        return item.file_url;
+      }
+    }
+    return item.file_url;
+  }, []);
+
   // ── Скачивание ────────────────────────────────────────────────────────
   const handleDownload = useCallback(async (item: UserFile) => {
     if (!item.file_url) return;
+    const url = await resolveDownloadUrl(item);
+    if (!url) return;
     if (isElectron()) {
       const savePath = await dialog.selectDirectory("Выберите папку для сохранения");
       if (!savePath) return;
       try {
-        await download.file({ url: item.file_url, fileName: item.file_name, savePath });
+        await download.file({ url, fileName: item.file_name, savePath });
         toast({ title: "Файл скачан", description: item.file_name, type: "success" });
       } catch (err: any) {
         toast({ title: "Ошибка скачивания", description: err.message, type: "error" });
       }
     } else {
       const a = document.createElement("a");
-      a.href = item.file_url; a.download = item.file_name; a.click();
+      a.href = url; a.download = item.file_name; a.click();
     }
-  }, [toast]);
+  }, [toast, resolveDownloadUrl]);
+
+  // ── Открытие файла (с presigned URL для S3) ─────────────────────────────
+  const handleOpenFile = useCallback(async (item: UserFile) => {
+    const url = await resolveDownloadUrl(item);
+    if (url) window.open(url, "_blank");
+  }, [resolveDownloadUrl]);
 
   // ── Создание папки ─────────────────────────────────────────────────────
   const handleCreateFolder = useCallback(async () => {
@@ -403,7 +427,7 @@ export default function FilesPage() {
       const hasLocal = false;
       openMenu(e, getFileMenuItems(item, hasLocal, canPaste), (actionId) => {
         switch (actionId) {
-          case "open":         if (item.file_url) window.open(item.file_url, "_blank"); break;
+          case "open":         handleOpenFile(item); break;
           case "download":     handleDownload(item); break;
           case "rename":       startRename(item); break;
           case "cut":          globalClipboard = { items: [item], mode: "cut" }; toast({ title: "Вырезано", type: "info" }); break;
@@ -418,7 +442,7 @@ export default function FilesPage() {
         }
       });
     }
-  }, [items, selected, openMenu, navigateToFolder, handleDownload, handlePaste, loadItems, toast]);
+  }, [items, selected, openMenu, navigateToFolder, handleDownload, handleOpenFile, handlePaste, loadItems, toast]);
 
   // ── Выделение ─────────────────────────────────────────────────────────
   const toggleSelect = useCallback((id: string, e: React.MouseEvent) => {
@@ -445,7 +469,7 @@ export default function FilesPage() {
           isSelected ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/50",
         )}
         onClick={(e) => { if (!isRenaming) { toggleSelect(item.id, e); if (!e.shiftKey && !e.ctrlKey && !e.metaKey && item.is_folder) navigateToFolder(item.id, item.file_name); } }}
-        onDoubleClick={() => { if (!item.is_folder && item.file_url) window.open(item.file_url, "_blank"); }}
+        onDoubleClick={() => { if (!item.is_folder) handleOpenFile(item); }}
         onContextMenu={(e) => handleContextMenu(e, item)}
         // п.7 — drag-out: начать перетаскивание файла в ОС
         draggable={!item.is_folder && !!item.file_url}
@@ -526,7 +550,7 @@ export default function FilesPage() {
           isSelected ? "border-primary/50 ring-1 ring-primary/30" : "border-border hover:border-primary/20"
         )}
         onClick={(e) => { toggleSelect(item.id, e); if (item.is_folder && !e.shiftKey && !e.ctrlKey && !e.metaKey) navigateToFolder(item.id, item.file_name); }}
-        onDoubleClick={() => { if (!item.is_folder && item.file_url) window.open(item.file_url, "_blank"); }}
+        onDoubleClick={() => { if (!item.is_folder) handleOpenFile(item); }}
         onContextMenu={(e) => handleContextMenu(e, item)}
         draggable={!item.is_folder && !!item.file_url}
         onDragStart={(e) => {
@@ -539,7 +563,7 @@ export default function FilesPage() {
         <div className={cn("bg-muted flex items-center justify-center relative overflow-hidden", isLg ? "h-32" : "h-20")}>
           {item.is_folder ? <FileIcon isFolder mimeType={null} size={isLg ? "lg" : "md"} />
             : item.file_type?.startsWith("image") && item.file_url
-              ? <img src={item.file_url} alt={item.file_name} className="w-full h-full object-cover" />
+              ? <SecureImage src={item.file_url} s3Key={item.s3_key} storageBackend={item.storage_backend} fileName={item.file_name} alt={item.file_name} className="w-full h-full object-cover" />
               : <FileIcon mimeType={item.file_type} size={isLg ? "lg" : "md"} />
           }
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
