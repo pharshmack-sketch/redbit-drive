@@ -1,18 +1,14 @@
 /**
  * AboutPage — страница «О приложении».
  *
- * Bug 3 fix: заменён самодельный inline SVG-маскот на реальное изображение
- * mascot_original.png, скачанное с Яндекс.Диска (987×1003, RGBA PNG).
- * Импорт через Vite обеспечивает корректный путь как в dev, так и в asar.
+ * Иконка: icon.svg — красный квадрат с "R", единый стиль с веб-приложением.
  */
 
 import React from "react";
 import { ExternalLink } from "lucide-react";
 import { shell, appInfo, isElectron } from "@/lib/electron";
 
-// Bug 3: реальный PNG-маскот вместо самодельного inline SVG
-// Bug 3: @assets alias → desktop-app/assets/icons/mascot_original.png
-import mascotUrl from "@assets/icons/mascot_original.png";
+import iconUrl from "@assets/icons/icon.svg";
 
 const FEATURES = [
   { icon: "📁", label: "Управление файлами и папками" },
@@ -38,17 +34,13 @@ export default function AboutPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-full p-8 text-center overflow-auto scrollbar-thin">
 
-      {/* Bug 3: реальный маскот Redbit */}
+      {/* Иконка Redbit — красный квадрат с "R" */}
       <div className="mb-6">
         <img
-          src={mascotUrl}
+          src={iconUrl}
           alt="Redbit"
-          className="w-32 h-32 object-contain"
+          className="w-24 h-24 object-contain rounded-2xl"
           draggable={false}
-          onError={(e) => {
-            // Fallback: скрываем если PNG не загрузился
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
         />
       </div>
 

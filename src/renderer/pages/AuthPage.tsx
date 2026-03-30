@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { Eye, EyeOff, Sun, Moon, Monitor, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
-import mascotUrl from "@assets/icons/mascot_original.png";
+import iconUrl from "@assets/icons/icon.svg";
 
 export default function AuthPage() {
   const { signIn } = useAuth();
@@ -72,12 +72,12 @@ export default function AuthPage() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center text-center space-y-6 max-w-sm">
-          {/* Маскот — реальный PNG Redbit */}
-          <div className="w-48 h-48 drop-shadow-xl animate-fade-in">
+          {/* Иконка Redbit — красный квадрат с R */}
+          <div className="w-36 h-36 drop-shadow-xl animate-fade-in">
             <img
-              src={mascotUrl}
+              src={iconUrl}
               alt="Redbit"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain rounded-3xl"
               draggable={false}
             />
           </div>
@@ -148,7 +148,7 @@ export default function AuthPage() {
 
         {/* Мобильный логотип */}
         <div className="lg:hidden flex items-center gap-2 mb-8">
-          <img src={mascotUrl} alt="Redbit" className="w-10 h-10 object-contain" draggable={false} />
+          <img src={iconUrl} alt="Redbit" className="w-10 h-10 object-contain rounded-lg" draggable={false} />
           <div>
             <span
               className="text-2xl font-bold"

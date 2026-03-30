@@ -32,19 +32,17 @@ import { cn } from "@/lib/utils";
 /**
  * Bug 1 fix: логотип в шапке.
  * Используем mascot_original.png — реальное изображение, скачанное с Яндекс.Диска.
- * Путь через import гарантирует корректную работу и в dev (Vite), и в prod (asar).
- * Fallback: inline SVG-заглушка если файл не загрузился.
+ * Иконка: SVG красный квадрат с "R" — в стиле веб-приложения (redbit-icon.svg).
+ * Fallback: CSS-элемент если SVG не загрузился.
  */
-// Bug 1: @assets alias → desktop-app/assets/icons/mascot_original.png
-import mascotUrl from "@assets/icons/mascot_original.png";
+import iconUrl from "@assets/icons/icon.svg";
 
 const AppLogo = () => (
   <div className="flex items-center gap-1.5 select-none">
     <img
-      src={mascotUrl}
+      src={iconUrl}
       alt="RedBit"
       className="w-6 h-6 object-contain rounded"
-      style={{ imageRendering: "auto" }}
       onError={(e) => {
         // Fallback: красный квадрат с буквой R
         const img = e.target as HTMLImageElement;

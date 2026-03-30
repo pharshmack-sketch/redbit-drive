@@ -1,35 +1,6 @@
 <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Фон -->
-  <rect width="512" height="512" rx="96" fill="#1e40af"/>
-  <!-- Тело робота -->
-  <rect x="106" y="230" width="300" height="210" rx="40" fill="#dc2626"/>
-  <!-- Голова -->
-  <rect x="128" y="96" width="256" height="192" rx="36" fill="#3b82f6"/>
-  <!-- Экран -->
-  <rect x="160" y="124" width="192" height="136" rx="20" fill="#0f172a"/>
-  <!-- Глаза -->
-  <circle cx="212" cy="180" r="28" fill="white"/>
-  <circle cx="300" cy="180" r="28" fill="white"/>
-  <circle cx="218" cy="188" r="14" fill="#0f172a"/>
-  <circle cx="306" cy="188" r="14" fill="#0f172a"/>
-  <!-- Блик в глазах -->
-  <circle cx="224" cy="180" r="6" fill="white"/>
-  <circle cx="312" cy="180" r="6" fill="white"/>
-  <!-- Рот / улыбка -->
-  <path d="M200 228 Q256 260 312 228" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
-  <!-- Антенны -->
-  <rect x="178" y="56" width="24" height="52" rx="12" fill="#3b82f6"/>
-  <rect x="310" y="56" width="24" height="52" rx="12" fill="#3b82f6"/>
-  <circle cx="190" cy="48" r="20" fill="#f59e0b"/>
-  <circle cx="322" cy="48" r="20" fill="#f59e0b"/>
-  <!-- Ноги -->
-  <rect x="152" y="410" width="82" height="72" rx="28" fill="#b91c1c"/>
-  <rect x="278" y="410" width="82" height="72" rx="28" fill="#b91c1c"/>
-  <!-- Руки -->
-  <rect x="40" y="240" width="70" height="120" rx="35" fill="#b91c1c"/>
-  <rect x="402" y="240" width="70" height="120" rx="35" fill="#b91c1c"/>
-  <!-- Значок диска на теле -->
-  <rect x="192" y="280" width="128" height="88" rx="16" fill="#b91c1c"/>
-  <circle cx="256" cy="324" r="28" fill="#f59e0b" stroke="white" stroke-width="6"/>
-  <circle cx="256" cy="324" r="10" fill="white"/>
+  <!-- Red rounded square background — matches web app redbit-icon.svg -->
+  <rect width="512" height="512" rx="96" fill="#F03E37"/>
+  <!-- White "R" letter -->
+  <text x="256" y="352" font-family="Arial, Helvetica, sans-serif" font-size="320" font-weight="bold" fill="white" text-anchor="middle">R</text>
 </svg>
