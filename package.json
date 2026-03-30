@@ -1,6 +1,6 @@
 {
   "name": "redbit-drive",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "RedBit Drive — desktop S3-storage client (macOS & Windows)",
   "main": "src/main/index.js",
   "homepage": "./",
@@ -15,7 +15,9 @@
     "build":           "npm run build:renderer",
     "build:renderer":  "vite build --config vite.renderer.config.ts",
     "build:icons":     "node build/generate-icons.js",
-    "dist:mac":        "npm run build:icons && npm run build:renderer && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --x64 --arm64 && node build/create-dmg.js",
+    "dist:mac":        "npm run build:icons && npm run build:renderer && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --x64 --arm64",
+    "dist:mac:arm64":  "npm run build:icons && npm run build:renderer && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --arm64",
+    "dist:mac:x64":    "npm run build:icons && npm run build:renderer && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --x64",
     "dist:mac:zip":    "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --x64 --arm64",
     "dist:win":        "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64",
     "dist":            "npm run dist:mac",
@@ -89,6 +91,7 @@
         }
       ],
       "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
         { "target": "zip", "arch": ["x64", "arm64"] }
       ]
     },
